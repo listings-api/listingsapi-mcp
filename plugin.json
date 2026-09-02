@@ -1,0 +1,25 @@
+{
+  "name": "listingsapi",
+  "displayName": "Listings API MCP",
+  "description": "Manage business listings, reviews, posts and local analytics across 50 plus directories, maps and search engines.",
+  "version": "1.0.0",
+  "author": "ListingsAPI",
+  "repository": "https://github.com/listings-api/listingsapi-mcp",
+  "license": "MIT",
+  "logo": "logo.svg",
+  "mcpServers": "mcp.json",
+  "variables": {
+    "type": "object",
+    "properties": {
+      "LISTINGSAPI_API_KEY": {
+        "type": "string",
+        "title": "Listings API key",
+        "description": "Your Listings API key. Create one at https://www.listingsapi.com/pricing",
+        "format": "password"
+      }
+    },
+    "required": [
+      "LISTINGSAPI_API_KEY"
+    ]
+  }
+}
