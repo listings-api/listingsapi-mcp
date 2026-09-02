@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "listingsapi": {
+      "url": "https://listingsapi.com/mcp",
+      "headers": {
+        "Authorization": "API ${LISTINGSAPI_API_KEY}"
+      }
+    }
+  }
+}
