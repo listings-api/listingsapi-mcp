@@ -1,0 +1,21 @@
+{
+  "name": "listingsapi",
+  "version": "1.0.0",
+  "description": "Manage business listings, reviews, posts and local analytics across 50 plus directories, maps and search engines.",
+  "mcpServers": {
+    "listingsapi": {
+      "httpUrl": "https://listingsapi.com/mcp",
+      "headers": {
+        "Authorization": "API ${LISTINGSAPI_API_KEY}"
+      }
+    }
+  },
+  "settings": [
+    {
+      "name": "LISTINGSAPI_API_KEY",
+      "description": "Your Listings API key. Create one at https://www.listingsapi.com/pricing",
+      "envVar": "LISTINGSAPI_API_KEY",
+      "sensitive": true
+    }
+  ]
+}
