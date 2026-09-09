@@ -184,12 +184,13 @@ A practical note: an assistant that is asked to "check every location" will happ
 - Full API reference: [docs.listingsapi.com](https://docs.listingsapi.com/docs)
 - MCP server page: [listingsapi.com/mcp](https://www.listingsapi.com/mcp)
 - SDKs for Python and Node: [docs.listingsapi.com/sdks](https://docs.listingsapi.com/sdks)
+- Agent skill for integrating the API into your own code: [listingsapi-integration/SKILL.md](listingsapi-integration/SKILL.md)
 - Apify actors for scheduled and no code use: [apify.com/listingsapi](https://apify.com/listingsapi)
 - Support: support@listingsapi.com
 
 ## About this repository
 
-This repository holds the connection manifests that MCP directories and clients read. It contains no product code. The Listings API service itself is closed source and runs at listingsapi.com.
+This repository holds the connection manifests that MCP directories and clients read, plus an agent skill for developers integrating the API into code. It contains no product code. The Listings API service itself is closed source and runs at listingsapi.com.
 
 | File | Read by |
 | --- | --- |
@@ -198,6 +199,7 @@ This repository holds the connection manifests that MCP directories and clients 
 | `mcp.json` and `plugin.json` | Cursor, for the marketplace listing |
 | `llms-install.md` | Cline, so it can configure the server on its own |
 | `logo.svg` | This README and the directories above |
+| `listingsapi-integration/` | Coding agents such as Claude Code and Codex, as an agent skill for integrating the Listings API into an application. `listingsapi-integration.zip` is the same directory packaged for app directories that take a skill upload |
 
 ## License
 
