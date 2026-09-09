@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://www.listingsapi.com">Website</a> ·
-  <a href="https://docs.listingsapi.com/docs">API docs</a> ·
+  <a href="https://listingsapi.com/docs">API docs</a> ·
   <a href="https://www.listingsapi.com/mcp">MCP page</a> ·
   <a href="https://www.listingsapi.com/pricing">Get an API key</a> ·
   <a href="https://apify.com/listingsapi">Apify actors</a>
@@ -155,7 +155,7 @@ Use the streamable HTTP transport with the endpoint and header above. The server
 
 ## Rate limits
 
-Requests are counted against your Listings API plan, not against this server. The Launch plan allows 10 requests per minute, Growth allows 50, and Enterprise limits are agreed per account. When you go over, the API answers with a 429 and a `retry_after_seconds` value that tells you how long to wait. Every error response also carries a `correlation_id` you can quote to support so they can find the exact request. Full detail is at [docs.listingsapi.com/docs/rate-limits](https://docs.listingsapi.com/docs/rate-limits).
+Requests are counted against your Listings API plan, not against this server. The Launch plan allows 10 requests per minute, Growth allows 50, and Enterprise limits are agreed per account. When you go over, the API answers with a 429 and a `retry_after_seconds` value that tells you how long to wait. Every error response also carries a `correlation_id` you can quote to support so they can find the exact request. Full detail is at [listingsapi.com/docs/rate-limits](https://listingsapi.com/docs/rate-limits).
 
 A practical note: an assistant that is asked to "check every location" will happily issue a request per location. On the Launch plan that means a pause every ten calls, so scope the question or ask the assistant to work in batches.
 
@@ -181,9 +181,9 @@ A practical note: an assistant that is asked to "check every location" will happ
 
 ## Documentation and support
 
-- Full API reference: [docs.listingsapi.com](https://docs.listingsapi.com/docs)
+- Full API reference: [listingsapi.com/docs](https://listingsapi.com/docs)
 - MCP server page: [listingsapi.com/mcp](https://www.listingsapi.com/mcp)
-- SDKs for Python and Node: [docs.listingsapi.com/sdks](https://docs.listingsapi.com/sdks)
+- SDKs for Python and Node: [listingsapi.com/sdks](https://listingsapi.com/sdks)
 - Agent skill for integrating the API into your own code: [listingsapi-integration/SKILL.md](listingsapi-integration/SKILL.md)
 - Apify actors for scheduled and no code use: [apify.com/listingsapi](https://apify.com/listingsapi)
 - Support: support@listingsapi.com
