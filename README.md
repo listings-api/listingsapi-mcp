@@ -65,6 +65,10 @@ Once the server is connected, these are the kinds of things you can ask your ass
 
 A Listings API account and an API key. Create one at [listingsapi.com/pricing](https://www.listingsapi.com/pricing). Plans start at 99 dollars a month and every plan includes a 14 day trial.
 
+### Try it free with a day pass
+
+When the sandbox day pass is offered, you can try the server for 24 hours with no card. A day pass covers the locations and listings tools for up to two locations, and its listings sync only to listingsAPI demo directories, never to real publishers. Start it at [listingsapi.com/signup?plan=day-pass](https://listingsapi.com/signup?plan=day-pass&campaign=daypass), or let your AI agent start it for you: it signs up with your name, email and company, and you confirm with the link or the 6-digit code we email you. The [day pass guide](https://listingsapi.com/docs/day-pass) has the details and the live status.
+
 Keys carry an access level. A key with Read access covers every lookup and report. Creating and updating locations, replying to reviews, publishing posts and connecting accounts need a key with Write access.
 
 The server accepts two ways of authenticating:
