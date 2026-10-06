@@ -1,25 +1,22 @@
-# Installing the Listings API MCP
+# Install ListingsAPI MCP in Cline
 
-This is a remote MCP server. Do not clone this repository, do not run any build step, and do not install any package. Configuration is the entire installation.
+ListingsAPI is a hosted MCP server at `https://listingsapi.com/mcp`. Configure a remote connection with Streamable HTTP. No local server package, build command, or bridge is required.
 
-## Step 1: get an API key
+## Connect the remote server
 
-Ask the user for their Listings API key. If they do not have one, tell them to create it at https://www.listingsapi.com/pricing and wait for them to supply it. Never invent or guess a key.
+1. Open **MCP Servers** in Cline, then **Remote Servers**.
+2. Set the name to `listingsapi`, the URL to `https://listingsapi.com/mcp`, and the transport to **Streamable HTTP**.
+3. Add the server. If your installed Cline version offers **Authenticate**, complete the ListingsAPI browser sign-in and consent flow. Start with read access unless the user's task needs writes.
+4. If browser authentication is unavailable, use an existing user-managed API key in the header `Authorization: API <your-api-key>`. Enter it locally; do not put it in a repository or send it in chat.
 
-If the user has no key and wants to try the server first, check `GET https://listingsapi.com/api/day-pass`. While `open` is true you can start a free 24-hour sandbox day pass for them by following https://listingsapi.com/docs/day-pass.md: it needs their first name, last name, email and company, their agreement to the Terms of Service, and then either the 6-digit code from the email or their press of Start my day pass in it. The user can also sign up in the browser at https://listingsapi.com/signup?plan=day-pass&campaign=daypass. The day pass returns an API key, starting with `dp.`, for the configuration below. It covers locations and listings only, and syncs only to demo directories.
-
-## Step 2: add the server to the MCP settings
-
-Add this entry to the `mcpServers` object in the Cline MCP settings file, replacing `<your-api-key>` with the key the user gave you:
+For manual configuration, open Cline's **Configure** tab, then **Configure MCP Servers**, and merge this entry into the existing `mcpServers` object:
 
 ```json
 {
   "mcpServers": {
     "listingsapi": {
+      "type": "streamableHttp",
       "url": "https://listingsapi.com/mcp",
-      "headers": {
-        "Authorization": "API <your-api-key>"
-      },
       "disabled": false,
       "autoApprove": []
     }
@@ -27,13 +24,24 @@ Add this entry to the `mcpServers` object in the Cline MCP settings file, replac
 }
 ```
 
-Use the streamable HTTP transport. Do not set a `command` or `args`, there is no local process to start.
+For API-key authentication, add `"headers": { "Authorization": "API <your-api-key>" }` inside the `listingsapi` entry and replace the placeholder in local settings. Cline defaults to legacy SSE when `type` is omitted, so keep `"type": "streamableHttp"`.
 
-## Step 3: confirm it works
+## Try the Day Pass sandbox
 
-Ask the server to list the user's locations. A successful response returns location records. If the response is a 401, the key is wrong or lacks access. If it is a 429, the plan rate limit was hit, wait for the number of seconds in `retry_after_seconds` and try again.
+If the user wants a trial, first read [Day Pass availability](https://listingsapi.com/api/day-pass) and the [Day Pass guide](https://listingsapi.com/docs/day-pass.md). Availability can change; offer signup only while `open` is true.
 
-## Notes
+The free Day Pass runs for 24 hours from activation, covers up to 2 locations, and syncs to 10 ListingsAPI demo directories. It never writes to real publishers. Reviews, posts, social, analytics, connected accounts, and webhooks are excluded.
 
-- Read operations need a key with Read access. Creating, updating, replying and publishing need Write access.
-- Replying to reviews, publishing posts and reading publisher analytics require the matching Google or Facebook profile to be connected and matched to the location first.
+The user can activate it at [Day Pass signup](https://listingsapi.com/signup?plan=day-pass&campaign=daypass) using their name, email, and company, after accepting the Terms of Service and Privacy Policy. Activation uses the emailed link or 6-digit code. Do not sign up, accept terms, collect an email code, or create a key as part of installing the connection.
+
+For OAuth, the Day Pass guide documents **Email me a sign-in link** with the same email. For API-key authentication, the user places the Day Pass key in local client settings using the same `API` header prefix.
+
+## Verify with a read
+
+After the user completes authentication, ask Cline to call `whoami` and `locations_all`. Check that the responses belong to the expected account. An empty location list can be valid for a new account; tool discovery alone does not prove account authentication.
+
+Keep `autoApprove` empty. A setup test does not require creating locations, replying to reviews, publishing posts, or connecting publisher accounts. Follow the server's error and retry guidance if a read fails.
+
+## Marketplace test status
+
+This guide has been reviewed statically. A real Cline setup test has **not** been run. Before submitting to the Cline Marketplace, give Cline only this guide or the README, observe successful setup and an authenticated read, and record the Cline version, date, and result. Do not mark the marketplace's tested checkbox until that evidence exists.

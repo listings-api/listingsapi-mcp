@@ -28,7 +28,7 @@ The [Listings API](https://www.listingsapi.com) is a REST API that does this job
 
 The Model Context Protocol lets an AI assistant call external tools. This server exposes the Listings API as a set of MCP tools, so an assistant such as Claude, Cursor, Windsurf, Gemini CLI or Cline can look up your locations, read your reviews, draft and publish replies, schedule posts and pull analytics in plain conversation, using your own account and your own data.
 
-It is a **remote server**. It runs at `https://listingsapi.com/mcp` and speaks the streamable HTTP transport. There is nothing to install, nothing to build and no package to keep up to date. You point your client at the URL, hand it your API key, and the tools appear.
+It is a **remote server**. It runs at `https://listingsapi.com/mcp` and uses Streamable HTTP. No local server package or build is required. Point your client at the URL and sign in through its OAuth browser flow, or use an existing API key where the client requires a header.
 
 ```
 https://listingsapi.com/mcp
@@ -38,17 +38,19 @@ https://listingsapi.com/mcp
 
 Once connected, the assistant can work across five areas of your account.
 
-**Locations.** Create a location with its full profile, update any field, search by name or store code, fetch a set of locations by ID, archive locations you no longer operate, and upload, star or remove the photos attached to each one. This is the master record that everything else keys off.
+**Locations.** Create and update location profiles, search for locations, and read their details. A location is the master record used by its publisher listings.
 
 **Listings and citations.** See which publishers currently carry a location and what state each listing is in, list the sites your plan covers, pull the duplicate listings the network has detected for one location or for your whole account, and mark a listing as a duplicate so it gets suppressed, or clear that flag if the match was wrong. Voice assistant coverage is reported separately.
 
-**Reviews.** Pull every review for a location with its rating, author, text, date and source site, fetch specific reviews by ID, read the review analytics overview for a location, and roll review counts up across the whole account to find the stores with the most unanswered feedback. Then publish a reply, edit it, or archive it. Replies go live on the review site.
+**Reviews.** Read reviews, fetch specific reviews by ID, inspect review analytics, and publish replies where the connected publisher supports them. Published replies appear on the review site.
 
-**Posts.** Publish an announcement, an event or an offer to a location's Google Business Profile, Facebook Page, Instagram and X, or fan one post out to many locations in a single bulk call and read back the per publisher result. List what has already been published and delete a post that should come down.
+**Posts.** Read existing posts and publish posts to supported connected profiles. Check the current tool contract for supported publishers and payloads.
 
 **Analytics.** Read Google, Facebook and Bing performance for any location: search views, map views, direction requests, calls, website clicks and the rest, for whatever date range you ask about.
 
 There is also a set of connected account operations for linking a Google or Facebook account, matching its profiles to your locations and creating a brand new Google Business Profile listing for a location that has none.
+
+Destructive operations such as archiving locations and deleting posts are not exposed as MCP tools. Use the [MCP guide](https://listingsapi.com/guides/connect-an-ai-agent-with-mcp) and the server's documentation tools to check the operations currently available.
 
 ### Example requests
 
@@ -63,11 +65,13 @@ Once the server is connected, these are the kinds of things you can ask your ass
 
 ## What you need
 
-A Listings API account and an API key. Create one at [listingsapi.com/pricing](https://www.listingsapi.com/pricing). Plans start at 99 dollars a month and every plan includes a 14 day trial.
+A ListingsAPI account. See [plans and signup](https://www.listingsapi.com/pricing) for production access, or check Day Pass availability below. OAuth-capable clients let you sign in without copying an API key into a configuration file.
 
 ### Try it free with a day pass
 
-When the sandbox day pass is offered, you can try the server for 24 hours with no card. A day pass covers the locations and listings tools for up to two locations, and its listings sync only to listingsAPI demo directories, never to real publishers. Start it at [listingsapi.com/signup?plan=day-pass](https://listingsapi.com/signup?plan=day-pass&campaign=daypass), or let your AI agent start it for you: it signs up with your name, email and company, and you confirm with the link or the 6-digit code we email you. The [day pass guide](https://listingsapi.com/docs/day-pass) has the details and the live status.
+Check [live availability](https://listingsapi.com/api/day-pass) before signup; the Day Pass is offered for limited periods. While `open` is true, you can activate a free 24-hour sandbox at [Day Pass signup](https://listingsapi.com/signup?plan=day-pass&campaign=daypass). It covers up to 2 locations and syncs to 10 ListingsAPI demo directories. It never writes to real publishers. Reviews, posts, social, analytics, connected accounts, and webhooks are excluded.
+
+Signup asks for your name, email, and company, plus acceptance of the Terms of Service and Privacy Policy. The 24 hours begin when you activate the pass through the emailed link or 6-digit code. Read the [Day Pass guide](https://listingsapi.com/docs/day-pass.md) for current limits and activation steps. In an OAuth client, choose **Email me a sign-in link** with the Day Pass email. For API-key clients, configure the Day Pass key locally using the same `API` header prefix. Installing a plugin or skill does not start a pass.
 
 Keys carry an access level. A key with Read access covers every lookup and report. Creating and updating locations, replying to reviews, publishing posts and connecting accounts need a key with Write access.
 
@@ -75,14 +79,14 @@ The server accepts two ways of authenticating:
 
 | Method | Header | Use it when |
 | --- | --- | --- |
-| API key | `Authorization: API <your-key>` | You are configuring a personal client and want the simplest setup |
-| OAuth 2.0 | `Authorization: Bearer <access-token>` | You are building a product on top and want per user consent |
+| OAuth 2.0 | Managed by your client | Your client supports the browser sign-in and consent flow |
+| API key | `Authorization: API <your-key>` | Your client requires a static header; enter the key only in local settings |
 
-Every example below uses the API key method.
+OAuth uses public clients, PKCE, and dynamic client registration. No pre-issued client secret is needed. Start with read access unless your task requires writes. OAuth tokens apply to the MCP endpoint; REST integrations use API keys.
 
 ## Setup
 
-Replace `<your-api-key>` with your real key in each snippet.
+Use the client instructions below. Replace API-key placeholders only in local settings, and keep credentials out of shared repositories.
 
 ### Claude Code
 
@@ -102,40 +106,58 @@ Add to `~/.cursor/mcp.json`, or to `.cursor/mcp.json` inside a project:
 {
   "mcpServers": {
     "listingsapi": {
-      "url": "https://listingsapi.com/mcp",
-      "headers": { "Authorization": "API <your-api-key>" }
+      "url": "https://listingsapi.com/mcp"
     }
   }
 }
 ```
 
+Use **Connect** on the server entry to complete OAuth in your browser. This repository's Cursor plugin uses the same configuration. If you need API-key authentication, add `"headers": { "Authorization": "API <your-api-key>" }` inside the entry in local settings.
+
 ### Windsurf
 
-Add to `~/.codeium/windsurf/mcp_config.json`:
+Open the MCP configuration file from your editor's MCP settings; the legacy Windsurf location is `~/.codeium/windsurf/mcp_config.json`. Editor versions can use a different path. For a client that supports OAuth, add:
 
 ```json
 {
   "mcpServers": {
     "listingsapi": {
-      "serverUrl": "https://listingsapi.com/mcp",
-      "headers": { "Authorization": "API <your-api-key>" }
+      "serverUrl": "https://listingsapi.com/mcp"
     }
   }
 }
 ```
 
+Complete the browser authentication prompt. For API-key authentication, add `"headers": { "Authorization": "API <your-api-key>" }` inside the entry in local settings. See the [current Cascade MCP documentation](https://docs.windsurf.com/windsurf/cascade/mcp) for your editor version.
+
 ### Gemini CLI
 
-Install this repository as an extension, then export your key:
+Install this repository as an extension:
 
 ```bash
 gemini extensions install https://github.com/listings-api/listingsapi-mcp
-export LISTINGSAPI_API_KEY="<your-api-key>"
 ```
+
+Restart Gemini CLI, then run `/mcp auth listingsapi` and complete the browser sign-in. Use `/mcp` to inspect the connection and discovered tools. The extension enables OAuth and needs no API-key setting.
+
+For an API-key setup instead of the extension, add this entry to the existing `mcpServers` object in `~/.gemini/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "listingsapi": {
+      "httpUrl": "https://listingsapi.com/mcp",
+      "headers": { "Authorization": "API ${LISTINGSAPI_API_KEY}" }
+    }
+  }
+}
+```
+
+Provide `LISTINGSAPI_API_KEY` through your local environment. Use one connection configuration at a time. See [Gemini's MCP documentation](https://geminicli.com/docs/tools/mcp-server/) for authentication and configuration details.
 
 ### Cline
 
-Open the MCP Servers panel and add a remote server with the URL `https://listingsapi.com/mcp` and the header `Authorization: API <your-api-key>`. The file [llms-install.md](llms-install.md) in this repository gives Cline the same instructions in a form it can follow on its own.
+Open **MCP Servers**, then **Remote Servers**, add `https://listingsapi.com/mcp`, and select **Streamable HTTP**. Complete **Authenticate** if your Cline version offers it. For manual settings, use `"type": "streamableHttp"`; omitting `type` defaults to legacy SSE. The [Cline install guide](llms-install.md) includes the complete configuration, API-key fallback, and a read-only verification procedure.
 
 ### VS Code with GitHub Copilot
 
@@ -200,11 +222,17 @@ This repository holds the connection manifests that MCP directories and clients 
 | --- | --- |
 | `server.json` | The official MCP Registry at registry.modelcontextprotocol.io |
 | `gemini-extension.json` | Gemini CLI, when you install this repository as an extension |
-| `mcp.json` and `plugin.json` | Cursor, for the marketplace listing |
+| `mcp.json` and `.cursor-plugin/plugin.json` | Cursor, for the marketplace plugin |
 | `llms-install.md` | Cline, so it can configure the server on its own |
 | `logo.svg` | This README and the directories above |
+| `logo-400.png` | Cline Marketplace, which requires a 400×400 PNG |
+| `skills/listingsapi/SKILL.md` | A conversational account workflow skill, prepared for ClawHub and compatible skill clients |
 | `listingsapi-integration/` | Coding agents such as Claude Code and Codex, as an agent skill for integrating the Listings API into an application. `listingsapi-integration.zip` is the same directory packaged for app directories that take a skill upload |
+
+See [marketplace submission notes](marketplaces/README.md) for package paths, submission prerequisites, and current test status. Cursor and Cline setup tests have not been run for these changes.
 
 ## License
 
 The manifests in this repository are released under the MIT License. See [LICENSE](LICENSE). Use of the Listings API itself is governed by the [Listings API terms](https://www.listingsapi.com/terms).
+
+The conversational skill in `skills/listingsapi/` is released under [MIT-0](skills/listingsapi/LICENSE) for ClawHub compatibility. The repository's root MIT license and existing integration skill are unchanged.

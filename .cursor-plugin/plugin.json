@@ -1,0 +1,14 @@
+{
+  "name": "listingsapi",
+  "description": "Manage business listings, reviews, posts and local analytics through the hosted ListingsAPI MCP server.",
+  "version": "1.0.1",
+  "author": {
+    "name": "ListingsAPI"
+  },
+  "homepage": "https://listingsapi.com/mcp",
+  "repository": "https://github.com/listings-api/listingsapi-mcp",
+  "license": "MIT",
+  "logo": "logo.svg",
+  "keywords": ["mcp", "local-seo", "business-listings"],
+  "mcpServers": "mcp.json"
+}
