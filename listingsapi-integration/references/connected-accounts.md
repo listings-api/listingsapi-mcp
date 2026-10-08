@@ -1,6 +1,6 @@
 # Connected accounts
 
-Publisher features run through the account holder's own Google or Facebook credentials. Until the publisher account is **connected** to the Listings API account and its profile is **matched** to the location, three things do not work: replying to reviews on that publisher, publishing posts to it, and reading its analytics. Analytics come back as `null` metrics, not as an error. Check connection state before assuming a feature is broken.
+Publisher features run through the account holder's own Google or Facebook credentials. Until the publisher account is **connected** to the Listings API account and its profile is **matched** to the location, three things do not work: replying to reviews on that publisher, publishing posts to it, and reading available analytics. Empty metrics can also reflect availability or freshness gaps; a connection check alone does not prove the cause.
 
 ## The two step model
 
@@ -27,7 +27,7 @@ Response: `data.<op>.url` is single use. Send the user there. On return to `succ
 1. `POST /connected-accounts/trigger-matches` with `{ "input": { "connectedAccountIds": ["<uuid>"] } }`. Queues a fetch and match job. `failedIds` lists accounts that could not be queued.
 2. Poll `GET /connected-accounts` until `requestMatchesStatus` is `MATCH_COMPLETED`.
 3. `GET /connected-accounts/{connectedAccountId}/connection-suggestions` (offset paged). Each record pairs a `locationId` with a suggested publisher listing and carries `matchedDataDatabaseId`.
-4. `POST /connected-accounts/confirm-matches` with `{ "input": { "matchRecordIds": ["<base64 of MatchRecordType:matchedDataDatabaseId>"] } }`.
+4. Review the suggested location/profile pairs and obtain explicit approval for the exact matches. Then call `POST /connected-accounts/confirm-matches` with `{ "input": { "matchRecordIds": ["<base64 of MatchRecordType:matchedDataDatabaseId>"] } }`.
 
 ## Match explicitly
 
@@ -42,18 +42,18 @@ For a location that has no Google listing at all. Different from connect-listing
 
 ```
 POST /locations/create/gmb-listing
-{ "input": { "locationId": "TG9jYXRpb246MTgwMDI4OQ==", "connectedAccountId": "4f712c17-...", "folderId": "accounts/123" } }
+{ "input": { "locationId": "TG9jYXRpb246MTAx", "connectedAccountId": "4f712c17-...", "folderId": "accounts/123" } }
 ```
 
 `folderId` is optional and comes from `GET /connected-accounts/{id}/folders`. A flat body without `input` is a 400.
 
-Response: `data.createGmbListingForLocation.success: true`. **This means accepted, not live.** Google verifies and provisions on its own schedule, often days. Known behavior: the endpoint returns `success: true` even when `connectedAccountId` is not a real connected Google account, so never treat the response as proof.
+Response: `data.createGmbListingForLocation.success: true`. **This means accepted, not live.** Google verifies and provisions on its own schedule, often days. Validate the account and location from fresh reads before creating; acceptance is not proof of a live or verified listing.
 
 Preconditions: the location has a valid name, address and phone; it does not already have a Google listing (one per location); the connected account is `CONNECTED`.
 
 ## Check whether a listing is live
 
-`GET /locations/{locationId}/listings/premium?listingType=premium` returns a plain array under `data.listingsForLocation`, one entry per publisher site. Find the entry whose `site.url` is `maps.google.com` and read:
+`GET /locations/{locationId}/listings/premium` returns a plain array under `data.listingsForLocation`, one entry per publisher site. Find the entry whose `site.url` is `maps.google.com` and read:
 
 | Field | Meaning |
 | --- | --- |

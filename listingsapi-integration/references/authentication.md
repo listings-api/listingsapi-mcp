@@ -8,13 +8,13 @@ Every REST request carries one header. The scheme is the literal word `API`, the
 Authorization: API <your-api-key>
 ```
 
-Base URL: `https://listingsapi.com/api/v4`. There is no sandbox. Every call runs against the live account, and writes publish to real Google and Facebook profiles.
+Base URL: `https://listingsapi.com/api/v4`. Production writes can publish to real directories and profiles. When available, the separately activated Day Pass is limited to sandbox locations and demo listings; it excludes publisher connections, reviews, posts, analytics, and webhooks. Verify the connected account before any test write. Do not start signup as part of installing a skill.
 
 A missing, malformed or revoked key returns HTTP 401 with `SY90005: Invalid Token` in the top level `errors` array. Do not retry with the same key.
 
 ## Where keys come from
 
-A person signs up at `https://listingsapi.com/signup`, and the first key is issued automatically. More keys are created at `https://listingsapi.com/dashboard/api-keys`. There is no programmatic way to create a key from outside the dashboard.
+A person signs up at `https://listingsapi.com/signup`, and the first key is issued automatically. More keys are created at `https://listingsapi.com/dashboard/api-keys`. Use the dashboard for ordinary key provisioning. A connected MCP client may also expose credential-management tools; do not invoke them without authorization.
 
 Each key has an access level chosen at creation:
 
@@ -57,5 +57,5 @@ OAuth details, for MCP clients only: discovery at `https://listingsapi.com/.well
 
 - Read it from an environment variable. Both official SDKs read `LISTINGSAPI_KEY` by default, so use that name.
 - Never put it in source, in a config file that is committed, in a client side bundle or in a URL.
-- Log the first eight characters at most when debugging which key a request used.
+- Do not log any part of a key. Use a non-secret key label or internal credential record ID for diagnostics.
 - Rotation: create the new key, deploy it, then revoke the old one in the dashboard. Revocation is immediate.

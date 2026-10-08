@@ -11,17 +11,17 @@ A location is the master record. Everything else (listings, reviews, posts, anal
 | `name` | Business name |
 | `description` | **At least 200 characters.** Shorter fails with `SY10005`. The most common first failure |
 | `countryIso` | Two letter ISO, must be supported (`SY10036`). List from `GET /countries` |
-| `subCategoryId` | Integer from `GET /sub-categories`. Pick one with `primary: true` |
-| `city` | Required where the country has city level addressing (`SY10126`). Optional only for a service area business with `hideAddress: true` |
+| `subCategoryId` | Matching category's numeric `databaseId` from `GET /sub-categories`; do not guess an example ID |
+| `city` | Required for a storefront where the country has city-level addressing (`SY10126`); check current country and service-area rules before omitting any address field |
 
-Strongly recommended at create time, because a location cannot publish without them:
+Also gather the following publication fields before creating the location. The current storefront contract requires the address, phone, and website; do not treat them as optional just because an older example did:
 
 | Field | Note |
 | --- | --- |
 | `street`, `postalCode`, `stateIso` | Validated against the country. `stateIso` values come from `GET /countries` |
 | `phone` | Validated for the country |
-| `storeId` | Your own key. Unique per account. Lets you find the record later with `GET /locations-by-store-codes?storeCodes=["ACME01"]` |
-| `bizUrl` | Website |
+| `storeId` | Optional API field; recommended unique business key for recovery through `GET /locations-by-store-codes` |
+| `bizUrl` | Required website for the storefront contract |
 | `businessHours` | Seven entries, one per weekday. See below |
 | `primaryGbpSiteCategoryId` | Google category as a GCID such as `gcid:restaurant`, resolved against `countryIso` |
 
@@ -51,7 +51,7 @@ Success: HTTP 200, `data.createLocation.success: true`, `errors: null`, `locatio
 
 Failure: HTTP 200 with `data.createLocation.errors` populated, or HTTP 400 for a malformed body. Read both.
 
-Plan caps apply: Launch allows 4 locations, Growth 25. Past the cap the create fails with `SY10151` nested in the errors.
+Plan caps apply. Check the current account entitlement before a backfill; cap failures can arrive as `SY10151` nested in the errors.
 
 ## Business hours
 
@@ -75,10 +75,6 @@ Useful fields on a location node: `id`, `databaseId`, `storeId`, `name`, address
 ## Update
 
 `POST /locations/update` with `input.id` (base64) plus only the fields that change. Unsent fields are left alone. Any change re-syncs every listing. `businessHours` is replaced as a whole when sent.
-
-## Archive
-
-`POST /locations/archive` schedules archival; `POST /locations/cancel_archive` reverses it before it runs. Archived locations stop publishing and stop counting toward the plan cap.
 
 ## Mapping an existing model onto locations
 

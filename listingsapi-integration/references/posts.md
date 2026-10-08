@@ -10,7 +10,7 @@ Posts publish to a location's Google Business Profile and Facebook Page. Three t
 {
   "input": {
     "postName": "Grand Opening",
-    "locationIds": ["TG9jYXRpb246MTgwMDI4OQ=="],
+    "locationIds": ["TG9jYXRpb246MTAx"],
     "postType": "ANNOUNCEMENT",
     "postSites": ["GOOGLE"],
     "postMessage": [{ "site": "GOOGLE", "message": "We are now open. Visit us this week." }],
@@ -32,9 +32,11 @@ Rules:
 
 The response is `data.createSocialPost` with `success`, `errors` and `socialPost`. The post starts as `status: INPROGRESS` with `publishDetails[].status: PUBLISHING`. Publishing is asynchronous.
 
-Poll `GET /posts/{postId}` with the base64 `socialPost.id` until `socialPostInfo.status` is `SUCCESS`. On failure read `publishDetails[].submissionError` per site. The usual cause is an unmatched publisher profile for one of the locations.
+Read `GET /posts/{postId}` using the returned `socialPost.id`. REST nests the result under `data.socialPostView.socialPostInfo`. `SCHEDULED` and `INPROGRESS` remain pending. Even `SUCCESS` does not prove every site accepted it: read each `publishDetails[].status`, `submissionError`, and the returned `postLinks[]`. Do not invent per-location confirmation when only site-level results are present. Bound status reads and report unresolved results.
 
-`GET /locations/{locationId}/posts?page=1&perPage=20` lists a location's posts (offset paged). `DELETE /posts/{postId}` takes the post down.
+`GET /locations/{locationId}/posts?page=1&perPage=20` lists a location's posts (offset paged). Multi-location creation uses `locationIds` with `POST /posts`. Its MCP tool is `posts_create_social`; redundant bulk-post aliases are excluded from MCP. Read the runtime schema rather than passing the REST `input` wrapper as an assumed tool argument.
+
+Show the complete campaign and get explicit approval before publishing. A write timeout can hide a successful create: reconcile existing posts before any retry.
 
 ## SDK note
 

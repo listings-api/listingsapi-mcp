@@ -81,7 +81,7 @@ A well formed write reached the resolver and a business rule rejected it. The tr
 }
 ```
 
-The gateway also copies nested errors into the top level `errors` array, so a single check of `errors.length > 0` catches shapes 1 and 2 on the wire. Check both anyway. Do not rely on `success` alone: some mutations have it (`createLocation`, `createGmbListingForLocation`, `connectListing`), others do not (`respondToInteraction` returns `interaction` and `errors`). `errors` empty or `null` means success.
+The gateway also copies nested errors into the top level `errors` array, so a single check of `errors.length > 0` catches shapes 1 and 2 on the wire. Check both anyway. Do not rely on `success` alone: some mutations have it (`createLocation`, `createGmbListingForLocation`, `connectListing`), others do not (`respondToInteraction` returns `interaction` and `errors`). Empty errors do not override an explicit `success: false`; operations such as `connectListing` can report a failure through `success` and `message`. Check the operation-specific result as well.
 
 Codes in the `SY10xxx` range name a location field. `SY810xx` codes come from the connected accounts endpoints and arrive nested too.
 
@@ -96,7 +96,7 @@ Present on gateway level `error` objects (shape 3), not on `errors[]` arrays, an
 ## Retry rules
 
 - **Reads** (GET): retry on 429 after `retry_after_seconds`, and on 502 and 503 with exponential backoff, up to a small cap.
-- **Writes** (POST): the API has no idempotency key. `clientMutationId` is echoed back but does not deduplicate. A write that timed out or returned 5xx may have committed. Before repeating a create, read back by a key you control: `GET /locations-by-store-codes` for a location, `GET /posts/{id}` for a post, the interaction's response list for a reply. Only repeat if it is absent.
+- **Writes** (POST): the API has no idempotency key. `clientMutationId` is echoed back but does not deduplicate. A write that timed out or returned 5xx may have committed. Before repeating a create, read back by a key you control: `GET /locations-by-store-codes` for a location, `GET /posts/{id}` for a post, the interaction's response list for a reply. Absence immediately after a timeout can be temporary; do not repeat until the prior outcome is established and the original approval still covers the action. Stop and report uncertainty when you cannot establish it.
 - **401 and SY90016**: never retry. Fix the key.
 - **Nested validation errors**: never retry. Fix the input.
 
@@ -108,6 +108,7 @@ Order of checks for every response:
 2. Body `error` object present: gateway failure, log `correlation_id`.
 3. Body `errors` array non empty: request or validation failure, log the messages, parse the leading `SYxxxxx` code.
 4. On a write, `data.<op>.errors` non empty: validation failure even on 200.
-5. `data.<op>` is `null` with nothing else: treat as failure.
+5. Explicit `success: false`: operation failed even if no errors array is present.
+6. Check the expected result. A missing created record is an unconfirmed write; a null analytics series is unavailable data, not a measured zero.
 
 Both SDKs collapse all of this into typed exceptions and raise on 200 bodies that carry errors. Python: `listingsapi.APIError` with `.status_code`, `.code`, `.errors`; `RateLimitError.retry_after`. Node: `APIError` with `.statusCode`, `.code`, `.errors`; `RateLimitError.retryAfter`.

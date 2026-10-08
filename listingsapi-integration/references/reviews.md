@@ -20,7 +20,7 @@ Filters, all as query parameters, arrays JSON encoded:
 
 Node fields worth using: `id`, `source`, `content`, `authorName`, `rating`, `date`, `responded`, `responseCount`, `canRespond`, `permalink`. `totalCount` sits beside `pageInfo`.
 
-Account wide: `GET /rollup_interactions` rolls review counts up across the account, for finding stores with the most unanswered reviews without a call per location.
+Account wide: `GET /rollup_interactions` returns paginated review, question, and social-mention records under `data.rollupInteractions.edges[].node`, not per-store counts. `totalCount` counts all matching records, not the current page. Follow every required cursor page before deriving totals. `tag` defaults to `all`; do not rely on `locationFilters` to constrain the account rollup. For selected locations, use per-location reads or explicitly filter the fetched records to verified location IDs.
 
 ## Reply
 
@@ -35,7 +35,7 @@ Response: `data.respondToInteraction.interaction` with `interactionStatus: CREAT
 
 Posting is asynchronous. `CREATED` moves to `COMPLETED` or `CONFIRMED` when the publisher accepts it, or `FAILED`. Re-fetch with `GET /reviewDetails` before telling a user the reply is live. A reply that stays `CREATED` for a long time usually means the publisher connection is stale (`connectivityIssue` on the connected account).
 
-Google accepts one owner reply per review. A second `respond` fails with `SY50121`. Use `POST /locations/reviews/respond/edit` to change an existing reply and `POST /locations/reviews/respond/archive` to remove it.
+Google accepts one owner reply per review. A second `respond` fails with `SY50121`. Use `POST /locations/reviews/respond/edit` to change an existing reply. Its flat body requires `reviewId`, `responseId`, and `responseContent`. The returned response UUID is different from the original review UUID. Do not promise that archiving a local response removes a live publisher reply.
 
 ## Review analytics
 
@@ -45,4 +45,4 @@ Google accepts one owner reply per review. A second `respond` fails with `SY5012
 
 - Poll per location on a schedule, newest first, and stop paging when you reach a review you already have. Store `id` as your dedupe key.
 - On Launch, ten locations polled once is a full minute of budget. Spread polling across the hour or use the `interaction.review` webhook instead.
-- Auto replies are public and permanent on the review site. Require a human approval step or a strict rating threshold, and never auto reply to reviews below four stars.
+- Publishing or editing a reply changes public content. Show the exact text, review, location, and publisher for explicit approval before a write. A rating threshold alone is not authorization; low ratings can still receive carefully reviewed replies. Re-read existing responses before submitting and stop if the target state changed.

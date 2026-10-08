@@ -8,8 +8,8 @@ Every response is a GraphQL shaped JSON object. The payload is under `data`, key
 {
   "data": {
     "allLocations": {
-      "edges": [{ "cursor": "TG9jYXRpb246MTgwMDI4OQ==", "node": { "id": "TG9jYXRpb246MTgwMDI4OQ==", "name": "Jenny Home" } }],
-      "pageInfo": { "endCursor": "TG9jYXRpb246MTgwMDI4OQ==", "hasNextPage": false, "total": 1 }
+      "edges": [{ "cursor": "TG9jYXRpb246MTAx", "node": { "id": "TG9jYXRpb246MTAx", "name": "Example Cafe" } }],
+      "pageInfo": { "endCursor": "TG9jYXRpb246MTAx", "hasNextPage": false, "total": 1 }
     }
   }
 }
@@ -49,7 +49,7 @@ Parameters `first` and `after`. Response has `edges[].node`, `edges[].cursor` an
 
 Used by: locations list, location search, reviews for a location, the account review rollup.
 
-Loop rule: request one page, process it, then request the next with `after=<pageInfo.endCursor>` while `pageInfo.hasNextPage` is true. Also stop if `edges` comes back empty. Do not issue pages in parallel; that is the most common source of 429s.
+Loop rule: request one page, process it, then request the next with `after=<pageInfo.endCursor>` while `pageInfo.hasNextPage` is true. If `edges` is empty while `hasNextPage` is true, or a required cursor is missing/repeated, stop and label the result incomplete. Do not issue pages in parallel; that is the most common source of 429s.
 
 `pageInfo` has no `startCursor`. To page backwards use `last` and `before=<cursor of the first edge>`.
 
@@ -73,8 +73,8 @@ Used by: subcategories, countries and states, plan sites, a location's photos, a
 
 Locations, listings, posts and categories carry two ids:
 
-- `id`: a base64 Relay global id, for example `TG9jYXRpb246MTgwMDI4OQ==`, which decodes to `Location:1800289`.
-- `databaseId`: the plain integer, `1800289`.
+- `id`: a base64 Relay global id, for example `TG9jYXRpb246MTAx`, which decodes to `Location:101`.
+- `databaseId`: the plain integer, `101`.
 
 Rules:
 

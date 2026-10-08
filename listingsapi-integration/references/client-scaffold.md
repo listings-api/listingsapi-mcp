@@ -2,11 +2,7 @@
 
 Two complete minimal clients, Python and TypeScript, plus the SDK equivalents. Each does five things: reads the key from the environment, sends `Authorization: API <key>`, pages by following `endCursor`, stays under the plan limit and retries 429s after `retry_after_seconds`, and surfaces errors including `correlation_id`. Copy one, run the read flow at the bottom, then extend.
 
-Set the key first. Never write it into a file that is committed.
-
-```bash
-export LISTINGSAPI_KEY="paste-from-dashboard"
-```
+Supply `LISTINGSAPI_KEY` through the existing secret store or a secure environment prompt. Do not paste a literal key into shell history, source, chat, or a committed file. Sample record IDs below are fictional; replace them with IDs from authorized reads.
 
 ## Prefer the SDK when the language matches
 
@@ -25,8 +21,8 @@ client = listingsapi.ListingsAPI()  # reads LISTINGSAPI_KEY
 for loc in client.locations.list(first=50).auto_paging_iter():
     print(loc.databaseId, loc.name, loc.city)
 
-reviews = client.reviews.list(1800289, first=20, rating_filters=[1, 2])
-insights = client.analytics.google(1800289, from_date="2026-08-01", to_date="2026-08-31")
+reviews = client.reviews.list(101, first=20, rating_filters=[1, 2])
+insights = client.analytics.google(101, from_date="2026-08-01", to_date="2026-08-31")
 ```
 
 ```ts
@@ -37,7 +33,7 @@ const client = new ListingsAPI(); // reads LISTINGSAPI_KEY
 const all = await client.fetchAllLocations({ fetchAll: true, pageSize: 100 });
 for (const loc of all) console.log(loc.databaseId, loc.name, loc.city);
 
-const insights = await client.fetchGoogleAnalytics(1800289, { fromDate: '2026-08-01', toDate: '2026-08-31' });
+const insights = await client.fetchGoogleAnalytics(101, { fromDate: '2026-08-01', toDate: '2026-08-31' });
 ```
 
 Use the raw client below when the language has no SDK, when the app already has an HTTP layer to reuse, or when you need control over the rate limiter across many workers.
@@ -95,6 +91,8 @@ class MinuteLimiter:
     Launch is 10/min, Growth 50/min. Leave headroom for retries and other processes."""
 
     def __init__(self, per_minute: int):
+        if per_minute <= 0:
+            raise ValueError("per_minute must be positive")
         self.capacity = per_minute
         self.tokens = float(per_minute)
         self.refill_per_sec = per_minute / 60.0
@@ -143,7 +141,7 @@ def _collect_errors(body: Any) -> list[dict]:
 
 @dataclass
 class ListingsAPI:
-    api_key: str = field(default_factory=lambda: os.environ["LISTINGSAPI_KEY"])
+    api_key: str = field(default_factory=lambda: os.environ["LISTINGSAPI_KEY"], repr=False)
     per_minute: int = 8              # Launch plan is 10; keep headroom
     max_read_retries: int = 4
     timeout: float = 30.0
@@ -151,6 +149,8 @@ class ListingsAPI:
     session: requests.Session = field(init=False)
 
     def __post_init__(self):
+        if not self.api_key or self.max_read_retries < 1 or self.timeout <= 0:
+            raise ValueError("A key, positive timeout, and at least one read attempt are required")
         self.limiter = MinuteLimiter(self.per_minute)
         self.session = requests.Session()
         self.session.headers.update({
@@ -197,6 +197,12 @@ class ListingsAPI:
             raise ListingsAPIError(e.get("message", "gateway error"), status=status, code=e.get("code"),
                                    errors=[e], correlation_id=e.get("correlation_id"), body=payload)
         errors = _collect_errors(payload)
+        if isinstance(payload, dict) and isinstance(payload.get("data"), dict):
+            for op in payload["data"].values():
+                if isinstance(op, dict) and op.get("success") is False:
+                    errors.append({"message": op.get("message") or "Operation returned success: false"})
+        if not isinstance(payload, dict) or "data" not in payload:
+            errors.append({"message": "Expected a JSON response envelope"})
         if status >= 400 or errors:
             first = errors[0].get("message") if errors else f"HTTP {status}"
             raise ListingsAPIError(first, status=status, code=_sy_code(first), errors=errors,
@@ -209,18 +215,25 @@ class ListingsAPI:
                      page_size: int = 50) -> Iterator[dict]:
         """Yield nodes from a Relay-style endpoint, one page at a time, never in parallel."""
         after = None
+        seen_cursors = set()
         while True:
             q = dict(params or {}, first=page_size)
             if after:
                 q["after"] = after
             conn = self.request("GET", path, params=q)["data"][data_key]
-            edges = conn.get("edges") or []
+            if not isinstance(conn, dict) or not isinstance(conn.get("edges"), list) or not isinstance(conn.get("pageInfo"), dict) or not isinstance(conn["pageInfo"].get("hasNextPage"), bool):
+                raise ValueError("Missing cursor page; result is incomplete")
+            edges = conn["edges"]
             for edge in edges:
                 yield edge["node"]
             info = conn.get("pageInfo") or {}
-            if not edges or not info.get("hasNextPage") or not info.get("endCursor"):
+            if not info.get("hasNextPage"):
                 return
-            after = info["endCursor"]
+            next_cursor = info.get("endCursor")
+            if not edges or not next_cursor or next_cursor in seen_cursors:
+                raise ValueError("Incomplete pagination; do not treat yielded records as a complete result")
+            seen_cursors.add(next_cursor)
+            after = next_cursor
 
     def offset_pages(self, path: str, data_key: str, *, params: dict | None = None,
                      per_page: int = 20) -> Iterator[dict]:
@@ -228,10 +241,15 @@ class ListingsAPI:
         while True:
             q = dict(params or {}, page=page, perPage=per_page)
             conn = self.request("GET", path, params=q)["data"][data_key]
-            for rec in conn.get("records") or []:
+            if not isinstance(conn, dict) or not isinstance(conn.get("records"), list) or not isinstance(conn.get("pageInfo"), dict) or not isinstance(conn["pageInfo"].get("hasNextPage"), bool):
+                raise ValueError("Missing offset page; result is incomplete")
+            records = conn["records"]
+            for rec in records:
                 yield rec
             if not (conn.get("pageInfo") or {}).get("hasNextPage"):
                 return
+            if not records:
+                raise ValueError("Empty page with more data pending; result is incomplete")
             page += 1
 
     # ---- a few typed calls -------------------------------------------------
@@ -246,17 +264,21 @@ class ListingsAPI:
 
     def create_location(self, input: dict) -> dict:
         """Raises on nested validation errors even though the status is 200."""
-        return self.request("POST", "/locations", body={"input": input})["data"]["createLocation"]["location"]
+        result = self.request("POST", "/locations", body={"input": input})["data"]["createLocation"]
+        location = result.get("location") if isinstance(result, dict) else None
+        if not isinstance(location, dict) or not location.get("id"):
+            raise ValueError("Location create is unconfirmed; reconcile before retrying")
+        return location
 
     def reviews(self, location_id: int | str, page_size: int = 20, **filters) -> Iterator[dict]:
         params = {k: (json.dumps(v) if isinstance(v, (list, dict)) else v) for k, v in filters.items()}
         return self.cursor_pages(f"/locations/{location_id}/reviews", "interactions",
                                  params=params, page_size=page_size)
 
-    def google_analytics(self, location_id: int | str, from_date: str, to_date: str) -> dict:
+    def google_analytics(self, location_id: int | str, from_date: str, to_date: str) -> dict | None:
         out = self.request("GET", f"/locations/{location_id}/google-analytics",
                            params={"fromDate": from_date, "toDate": to_date})
-        return out["data"].get("googleInsights") or {}
+        return out["data"].get("googleInsights")
 
 
 if __name__ == "__main__":
@@ -309,7 +331,10 @@ export const locationGid = (id: number | string): string =>
 class MinuteLimiter {
   private tokens: number;
   private updated = Date.now();
-  constructor(private readonly perMinute: number) { this.tokens = perMinute; }
+  constructor(private readonly perMinute: number) {
+    if (perMinute <= 0) throw new Error('perMinute must be positive');
+    this.tokens = perMinute;
+  }
   async acquire(): Promise<void> {
     for (;;) {
       const now = Date.now();
@@ -343,7 +368,7 @@ function collectErrors(body: any): ApiErrorEntry[] {
 export interface ClientOptions { apiKey?: string; perMinute?: number; maxReadRetries?: number; timeoutMs?: number }
 
 export class ListingsAPI {
-  private readonly apiKey: string;
+  readonly #apiKey: string;
   private readonly limiter: MinuteLimiter;
   private readonly maxReadRetries: number;
   private readonly timeoutMs: number;
@@ -351,10 +376,11 @@ export class ListingsAPI {
   constructor(opts: ClientOptions = {}) {
     const key = opts.apiKey ?? process.env.LISTINGSAPI_KEY;
     if (!key) throw new Error('LISTINGSAPI_KEY is not set');
-    this.apiKey = key;
+    this.#apiKey = key;
     this.limiter = new MinuteLimiter(opts.perMinute ?? 8);   // Launch plan is 10; keep headroom
     this.maxReadRetries = opts.maxReadRetries ?? 4;
     this.timeoutMs = opts.timeoutMs ?? 30_000;
+    if (this.maxReadRetries < 1 || this.timeoutMs <= 0) throw new Error('Positive timeout and at least one read attempt are required');
   }
 
   // ---- transport ---------------------------------------------------------
@@ -369,7 +395,7 @@ export class ListingsAPI {
       await this.limiter.acquire();
       const res = await fetch(url, {
         method,
-        headers: { Authorization: `API ${this.apiKey}`, Accept: 'application/json', ...(opts.body ? { 'Content-Type': 'application/json' } : {}) },
+        headers: { Authorization: `API ${this.#apiKey}`, Accept: 'application/json', ...(opts.body ? { 'Content-Type': 'application/json' } : {}) },
         body: opts.body ? JSON.stringify(opts.body) : undefined,
         signal: AbortSignal.timeout(this.timeoutMs),
       });
@@ -394,6 +420,10 @@ export class ListingsAPI {
       throw new ListingsAPIError(e.message ?? 'gateway error', status, e.code ?? null, [e], e.correlation_id ?? null, payload);
     }
     const errors = collectErrors(payload);
+    for (const op of Object.values<any>(payload?.data ?? {})) {
+      if (op && typeof op === 'object' && op.success === false) errors.push({ message: op.message ?? 'Operation returned success: false' });
+    }
+    if (!payload || typeof payload !== 'object' || !('data' in payload)) errors.push({ message: 'Expected a JSON response envelope' });
     if (status >= 400 || errors.length) {
       const first = errors[0]?.message ?? `HTTP ${status}`;
       throw new ListingsAPIError(first, status, syCode(first), errors, null, payload);
@@ -406,12 +436,16 @@ export class ListingsAPI {
   /** Yields nodes from a Relay-style endpoint, one page at a time, never in parallel. */
   async *cursorPages<T = any>(path: string, dataKey: string, params: Record<string, string | number> = {}, pageSize = 50): AsyncGenerator<T> {
     let after: string | undefined;
+    const seenCursors = new Set<string>();
     for (;;) {
       const conn = (await this.request('GET', path, { params: { ...params, first: pageSize, ...(after ? { after } : {}) } })).data[dataKey];
-      const edges: any[] = conn?.edges ?? [];
+      if (!conn || !Array.isArray(conn.edges) || typeof conn.pageInfo?.hasNextPage !== 'boolean') throw new Error('Missing cursor page; result is incomplete');
+      const edges: any[] = conn.edges;
       for (const edge of edges) yield edge.node as T;
       const info = conn?.pageInfo ?? {};
-      if (!edges.length || !info.hasNextPage || !info.endCursor) return;
+      if (!info.hasNextPage) return;
+      if (!edges.length || !info.endCursor || seenCursors.has(info.endCursor)) throw new Error('Incomplete pagination; do not treat yielded records as a complete result');
+      seenCursors.add(info.endCursor);
       after = info.endCursor;
     }
   }
@@ -419,8 +453,10 @@ export class ListingsAPI {
   async *offsetPages<T = any>(path: string, dataKey: string, params: Record<string, string | number> = {}, perPage = 20): AsyncGenerator<T> {
     for (let page = 1; ; page++) {
       const conn = (await this.request('GET', path, { params: { ...params, page, perPage } })).data[dataKey];
-      for (const rec of conn?.records ?? []) yield rec as T;
-      if (!conn?.pageInfo?.hasNextPage) return;
+      if (!conn || !Array.isArray(conn.records) || typeof conn.pageInfo?.hasNextPage !== 'boolean') throw new Error('Missing offset page; result is incomplete');
+      for (const rec of conn.records) yield rec as T;
+      if (!conn.pageInfo.hasNextPage) return;
+      if (!conn.records.length) throw new Error('Empty page with more data pending; result is incomplete');
     }
   }
 
@@ -436,7 +472,9 @@ export class ListingsAPI {
   /** Throws on nested validation errors even though the status is 200. */
   async createLocation(input: Record<string, unknown>) {
     const out = await this.request('POST', '/locations', { body: { input } });
-    return out.data.createLocation.location;
+    const location = out.data?.createLocation?.location;
+    if (!location?.id) throw new Error('Location create is unconfirmed; reconcile before retrying');
+    return location;
   }
 
   reviews(locationId: number | string, filters: Record<string, unknown> = {}, pageSize = 20) {
@@ -446,7 +484,7 @@ export class ListingsAPI {
 
   async googleAnalytics(locationId: number | string, fromDate: string, toDate: string) {
     const out = await this.request('GET', `/locations/${locationId}/google-analytics`, { params: { fromDate, toDate } });
-    return out.data.googleInsights ?? {};
+    return out.data.googleInsights ?? null;
   }
 }
 
@@ -473,4 +511,4 @@ Keep the five responsibilities but swap the parts:
 - Config: read `LISTINGSAPI_KEY` from wherever the app already reads secrets. For per tenant keys, pass the key into the constructor per request and never cache a client across tenants.
 - Limiter: if the app already has a shared rate limiter or a job queue with concurrency controls, use that. The bucket must be shared by every worker that talks to the same account; a per process bucket in a fleet of ten workers is ten times the plan.
 - Errors: map `ListingsAPIError` onto the app's error type and make sure `code`, `errors` and `correlationId` reach the logs.
-- Tests: record one real response for each shape (cursor page, offset page, plain array, nested validation failure, 429) and replay them. Do not hand write fixtures from memory.
+- Tests: use synthetic fixtures derived from the endpoint contracts or authorized, sanitized responses. Cover cursor/offset pages, a repeated cursor, plain arrays, nested validation failures, `success: false`, 429, and ambiguous write outcomes. Never commit customer responses or credentials.

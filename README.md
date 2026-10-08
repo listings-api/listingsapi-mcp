@@ -205,18 +205,45 @@ A practical note: an assistant that is asked to "check every location" will happ
 | Analytics come back empty | Profile not connected or not matched to the location | Run the connected accounts operations to link and match it |
 | Reply accepted but not visible | Review site is still processing it | Give it a few minutes and refresh the review |
 
+## Agent skills
+
+Install the workflows you need from this repository with the [Skills CLI](https://github.com/vercel-labs/skills). Skills supply instructions; they do not configure credentials, grant access, or run customer workflows during installation.
+
+```bash
+npx skills add listings-api/listingsapi-mcp
+```
+
+| Skill | What it does |
+| --- | --- |
+| [listingsapi-listing-audit](skills/listingsapi-listing-audit/SKILL.md) | Inspect profile completeness, publisher status, live links, and duplicate candidates; produce a prioritized repair plan. |
+| [listingsapi-review-management](skills/listingsapi-review-management/SKILL.md) | Triage reviews, draft replies, and publish or edit only approved responses. |
+| [listingsapi-multi-location-posting](skills/listingsapi-multi-location-posting/SKILL.md) | Prepare and publish approved Google/Facebook campaigns across selected locations, then verify results. |
+| [listingsapi-performance-reporting](skills/listingsapi-performance-reporting/SKILL.md) | Compare performance and reputation with explicit date windows, coverage, and freshness caveats. |
+| [listingsapi-integration](skills/listingsapi-integration/SKILL.md) | Integrate REST/SDK authentication, location setup, publisher connections, and submission checks into a new or existing app. |
+| [listingsapi](skills/listingsapi/SKILL.md) | General account navigation, connection prerequisites, and Day Pass guidance. |
+
+To choose one skill directly:
+
+```bash
+npx skills add listings-api/listingsapi-mcp --skill listingsapi-integration
+```
+
+The integration skill retains its existing name. Its canonical source is under `skills/` for standard discovery; the original `listingsapi-integration/` path and ZIP are maintained as compatibility copies. Run `python3 scripts/package-integration.py` after editing the canonical integration skill. Read-only workflows need read access; public replies, campaign publication, profile edits, and publisher connections require approval of the concrete action and write access. Day Pass only covers sandbox locations and demo listings.
+
+See [skills publication notes](marketplaces/skills-sh.md) for validation and release steps. GitHub availability and skills.sh indexing are separate: the [skills.sh FAQ](https://skills.sh/docs/faq) describes discovery through genuine CLI installation telemetry.
+
 ## Documentation and support
 
 - Full API reference: [listingsapi.com/docs](https://listingsapi.com/docs)
 - MCP server page: [listingsapi.com/mcp](https://www.listingsapi.com/mcp)
 - SDKs for Python and Node: [listingsapi.com/sdks](https://listingsapi.com/sdks)
-- Agent skill for integrating the API into your own code: [listingsapi-integration/SKILL.md](listingsapi-integration/SKILL.md)
+- Agent skill for integrating the API into your own code: [listingsapi-integration](skills/listingsapi-integration/SKILL.md)
 - Apify actors for scheduled and no code use: [apify.com/listingsapi](https://apify.com/listingsapi)
 - Support: support@listingsapi.com
 
 ## About this repository
 
-This repository holds the connection manifests that MCP directories and clients read, plus an agent skill for developers integrating the API into code. It contains no product code. The Listings API service itself is closed source and runs at listingsapi.com.
+This repository holds the connection manifests that MCP directories and clients read, plus account workflow and developer integration skills. It contains no product code. The Listings API service itself is closed source and runs at listingsapi.com.
 
 | File | Read by |
 | --- | --- |
@@ -227,7 +254,9 @@ This repository holds the connection manifests that MCP directories and clients 
 | `logo.svg` | This README and the directories above |
 | `logo-400.png` | Cline Marketplace, which requires a 400×400 PNG |
 | `skills/listingsapi/SKILL.md` | A conversational account workflow skill, prepared for ClawHub and compatible skill clients |
-| `listingsapi-integration/` | Coding agents such as Claude Code and Codex, as an agent skill for integrating the Listings API into an application. `listingsapi-integration.zip` is the same directory packaged for app directories that take a skill upload |
+| `skills/listingsapi-*/` | Independently installable workflow and developer integration skills |
+| `listingsapi-integration/` | Generated compatibility copy of the integration skill, preserving its original file paths |
+| `listingsapi-integration.zip` | The `skills/listingsapi-integration/` directory packaged for clients that take a skill upload |
 
 See [marketplace submission notes](marketplaces/README.md) for package paths, submission prerequisites, and current test status. Cursor and Cline setup tests have not been run for these changes.
 
