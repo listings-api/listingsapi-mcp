@@ -41,9 +41,9 @@ The same server is listed in these directories, so you can install it from the o
 
 | Directory | Listing |
 | --- | --- |
-| Claude connector directory | [claude.ai/directory/listings-api](https://claude.ai/directory/listings-api) |
+| Claude | [claude.ai/directory/listings-api](https://claude.ai/directory/listings-api) |
 | Official MCP Registry | [com.listingsapi/mcp](https://registry.modelcontextprotocol.io/?q=com.listingsapi%2Fmcp) |
-| Cursor Directory | [cursor.directory/plugins/listings-api](https://cursor.directory/plugins/listings-api) |
+| Cursor | [cursor.directory/plugins/listings-api](https://cursor.directory/plugins/listings-api) |
 | Glama | [glama.ai/mcp/connectors/com.listingsapi/mcp](https://glama.ai/mcp/connectors/com.listingsapi/mcp) |
 | Smithery | [smithery.ai/servers/support-hxau/listingsapi](https://smithery.ai/servers/support-hxau/listingsapi) |
 | MCP.so | [mcp.so/servers/listings-api](https://mcp.so/servers/listings-api) |
