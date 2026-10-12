@@ -12,6 +12,7 @@
   <a href="https://www.listingsapi.com">Website</a> ·
   <a href="https://listingsapi.com/docs">API docs</a> ·
   <a href="https://www.listingsapi.com/mcp">MCP page</a> ·
+  <a href="https://claude.ai/directory/listings-api">Claude directory</a> ·
   <a href="https://www.listingsapi.com/pricing">Get an API key</a> ·
   <a href="https://apify.com/listingsapi">Apify actors</a>
 </p>
@@ -33,6 +34,22 @@ It is a **remote server**. It runs at `https://listingsapi.com/mcp` and uses Str
 ```
 https://listingsapi.com/mcp
 ```
+
+## Find it in directories
+
+The same server is listed in these directories, so you can install it from the one your client already uses:
+
+| Directory | Listing |
+| --- | --- |
+| Claude connector directory | [claude.ai/directory/listings-api](https://claude.ai/directory/listings-api) |
+| Official MCP Registry | [com.listingsapi/mcp](https://registry.modelcontextprotocol.io/?q=com.listingsapi%2Fmcp) |
+| Cursor Directory | [cursor.directory/plugins/listings-api](https://cursor.directory/plugins/listings-api) |
+| Glama | [glama.ai/mcp/connectors/com.listingsapi/mcp](https://glama.ai/mcp/connectors/com.listingsapi/mcp) |
+| Smithery | [smithery.ai/servers/support-hxau/listingsapi](https://smithery.ai/servers/support-hxau/listingsapi) |
+| MCP.so | [mcp.so/servers/listings-api](https://mcp.so/servers/listings-api) |
+| mcpservers.org | [mcpservers.org/servers/listings-api/listingsapi-mcp](https://mcpservers.org/servers/listings-api/listingsapi-mcp) |
+
+The agent skills in this repository are listed separately; see [Agent skills](#agent-skills).
 
 ## What you can do with it
 
@@ -96,11 +113,13 @@ claude mcp add --transport http listingsapi https://listingsapi.com/mcp --header
 
 ### Claude Desktop
 
-Open Settings, then Connectors, then Add custom connector, and enter `https://listingsapi.com/mcp` as the URL. Claude Desktop will prompt for authentication when the server first requests it.
+Open [claude.ai/directory/listings-api](https://claude.ai/directory/listings-api) and click **Connect**. Claude runs the sign-in flow and the connector is ready in Claude Desktop and Claude.ai.
+
+To add it by URL instead, open Settings, then Connectors, then Add custom connector, and enter `https://listingsapi.com/mcp` as the URL. Claude Desktop will prompt for authentication when the server first requests it.
 
 ### Cursor
 
-Add to `~/.cursor/mcp.json`, or to `.cursor/mcp.json` inside a project:
+Install it from [Cursor Directory](https://cursor.directory/plugins/listings-api), or add to `~/.cursor/mcp.json`, or to `.cursor/mcp.json` inside a project:
 
 ```json
 {
@@ -208,6 +227,8 @@ A practical note: an assistant that is asked to "check every location" will happ
 ## Agent skills
 
 Install the workflows you need from this repository with the [Skills CLI](https://github.com/vercel-labs/skills). Skills supply instructions; they do not configure credentials, grant access, or run customer workflows during installation.
+
+The five workflow skills are listed on [skills.sh](https://www.skills.sh/listings-api/listingsapi-mcp), and the general `listingsapi` skill is on [ClawHub](https://clawhub.ai/listingsapi/skills/listingsapi) for OpenClaw.
 
 ```bash
 npx skills add listings-api/listingsapi-mcp
