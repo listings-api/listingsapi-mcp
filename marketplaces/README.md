@@ -13,7 +13,7 @@ These files prepare ListingsAPI for directory review. They do not publish a list
 | Description | Manage business locations, publisher listings, reviews, posts, and local analytics through the hosted ListingsAPI MCP server. |
 | Authentication | Public OAuth with PKCE and dynamic client registration where the client supports it; otherwise an existing user-managed key with `Authorization: API <key>`. |
 | Documentation | https://listingsapi.com/guides/connect-an-ai-agent-with-mcp |
-| Day Pass guide | https://listingsapi.com/docs/day-pass.md |
+| Day Pass guide | https://listingsapi.com/sandbox |
 | Day Pass signup | https://listingsapi.com/signup?plan=day-pass&campaign=daypass |
 | Availability | https://listingsapi.com/api/day-pass |
 | Logo | [`logo.svg`](../logo.svg), or [`logo-400.png`](../logo-400.png) for a 400×400 PNG |
@@ -61,4 +61,4 @@ No real Cursor, Gemini, or Cline setup test has been run for this draft. Do not 
 - [ClawHub skill format](https://github.com/openclaw/clawhub/blob/main/docs/skill-format.md)
 - [ClawHub publishing](https://github.com/openclaw/clawhub/blob/main/docs/publishing.md)
 - [ListingsAPI MCP guide](https://listingsapi.com/guides/connect-an-ai-agent-with-mcp)
-- [ListingsAPI Day Pass guide](https://listingsapi.com/docs/day-pass.md)
+- [ListingsAPI Day Pass guide](https://listingsapi.com/sandbox)

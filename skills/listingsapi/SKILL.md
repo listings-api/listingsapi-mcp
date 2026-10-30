@@ -33,7 +33,7 @@ Use `search_docs`, `get_doc`, and `get_endpoint` to check current contracts befo
 
 ## Try the Day Pass
 
-Read [live availability](https://listingsapi.com/api/day-pass) and the [Day Pass guide](https://listingsapi.com/docs/day-pass.md) before offering signup. Only offer it while `open` is true. The free pass lasts 24 hours from activation, supports up to 2 locations, and syncs to 10 ListingsAPI demo directories. It never writes to real publishers. Reviews, posts, social, analytics, connected accounts, and webhooks are excluded.
+Read [live availability](https://listingsapi.com/api/day-pass) and the [Day Pass guide](https://listingsapi.com/sandbox.md) before offering signup. Only offer it while `open` is true. The free pass lasts 24 hours from activation, supports up to 2 locations, and syncs to 10 ListingsAPI demo directories. It never writes to real publishers. Reviews, posts, social, analytics, connected accounts, and webhooks are excluded.
 
 Direct the user to [Day Pass signup](https://listingsapi.com/signup?plan=day-pass&campaign=daypass). It asks for name, email, and company, acceptance of the Terms of Service and Privacy Policy, then activation by emailed link or 6-digit code. The user can sign in through OAuth with **Email me a sign-in link** using the Day Pass email, or configure their Day Pass key locally. Treat signup and activation as a separate user-authorized action, not an implicit part of installing this skill.
 

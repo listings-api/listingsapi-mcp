@@ -28,7 +28,7 @@ For API-key authentication, add `"headers": { "Authorization": "API <your-api-ke
 
 ## Try the Day Pass sandbox
 
-If the user wants a trial, first read [Day Pass availability](https://listingsapi.com/api/day-pass) and the [Day Pass guide](https://listingsapi.com/docs/day-pass.md). Availability can change; offer signup only while `open` is true.
+If the user wants a trial, first read [Day Pass availability](https://listingsapi.com/api/day-pass) and the [Day Pass guide](https://listingsapi.com/sandbox.md). Availability can change; offer signup only while `open` is true.
 
 The free Day Pass runs for 24 hours from activation, covers up to 2 locations, and syncs to 10 ListingsAPI demo directories. It never writes to real publishers. Reviews, posts, social, analytics, connected accounts, and webhooks are excluded.
 
