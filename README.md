@@ -105,6 +105,26 @@ OAuth uses public clients, PKCE, and dynamic client registration. No pre-issued 
 
 Use the client instructions below. Replace API-key placeholders only in local settings, and keep credentials out of shared repositories.
 
+### Codex
+
+In **Add plugin marketplace**, enter:
+
+| Field | Value |
+| --- | --- |
+| Source | `https://github.com/listings-api/listingsapi-mcp.git` |
+| Git ref | `main` |
+| Sparse paths | Leave empty |
+
+Choose the **Listings API** marketplace and install **Listings API**. Complete the browser sign-in and consent flow when prompted. The plugin connects to `https://listingsapi.com/mcp` and includes the six [agent skills](#agent-skills) already in this repository. Installation does not create a ListingsAPI account or activate a Day Pass.
+
+To register the same marketplace from the Codex CLI:
+
+```bash
+codex plugin marketplace add https://github.com/listings-api/listingsapi-mcp.git --ref main
+```
+
+The catalog is [`.agents/plugins/marketplace.json`](.agents/plugins/marketplace.json), and the Codex compatibility manifest is [`.codex-plugin/plugin.json`](.codex-plugin/plugin.json). They reuse the existing skills, logo, and MCP configuration. Keep sparse paths empty so those files remain available. This repo marketplace is separate from the public OpenAI plugin directory; see the [official packaging documentation](https://developers.openai.com/plugins/build/plugins).
+
 ### Claude Code
 
 ```bash

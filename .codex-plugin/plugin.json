@@ -1,0 +1,28 @@
+{
+  "name": "listingsapi",
+  "version": "1.0.1",
+  "description": "Manage business listings, reviews, posts and local analytics through the hosted ListingsAPI MCP server.",
+  "author": {
+    "name": "ListingsAPI"
+  },
+  "homepage": "https://listingsapi.com/mcp",
+  "repository": "https://github.com/listings-api/listingsapi-mcp",
+  "license": "MIT",
+  "keywords": ["mcp", "local-seo", "business-listings"],
+  "skills": "./skills/",
+  "mcpServers": "./mcp.json",
+  "interface": {
+    "displayName": "Listings API",
+    "shortDescription": "Listings, reviews & analytics",
+    "longDescription": "Manage business locations, publisher listings, reviews, posts and local analytics with the hosted Listings API MCP server and six bundled workflow skills.",
+    "developerName": "ListingsAPI",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://listingsapi.com",
+    "privacyPolicyURL": "https://www.listingsapi.com/privacy",
+    "termsOfServiceURL": "https://www.listingsapi.com/terms",
+    "defaultPrompt": "Show my business locations and help me review their listings.",
+    "logo": "./logo-400.png",
+    "composerIcon": "./logo-400.png"
+  }
+}
