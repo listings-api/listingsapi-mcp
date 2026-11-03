@@ -14,7 +14,7 @@ A missing, malformed or revoked key returns HTTP 401 with `SY90005: Invalid Toke
 
 ## Where keys come from
 
-A person signs up at `https://listingsapi.com/signup`, and the first key is issued automatically. More keys are created at `https://listingsapi.com/dashboard/api-keys`. Use the dashboard for ordinary key provisioning. A connected MCP client may also expose credential-management tools; do not invoke them without authorization.
+A person signs up at `https://listingsapi.com/signup`, and the first key is issued automatically. More keys are created at `https://listingsapi.com/dashboard/api-keys`. The MCP server does not create or return API keys, so create keys in the dashboard.
 
 Each key has an access level chosen at creation:
 
