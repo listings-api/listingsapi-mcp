@@ -36,6 +36,21 @@ Response: `data.<op>.url` is single use. Send the user there. On return to `succ
 
 `SY81068` means that listing is already linked to a location. `SY81070` means the listing does not belong to the connected account you named.
 
+## Create a location from a listing
+
+For a Google or Facebook listing that has no location yet. This creates the location from the publisher's data and links it to the listing.
+
+```
+POST /connected-accounts/create-location-from-listing
+{ "input": { "connectedAccountId": "4f712c17-...", "connectedAccountListingId": "<id from connected-account-listings>", "enabledSiteIds": [384, 180], "submissionDisabledSiteIds": [180] } }
+```
+
+`enabledSiteIds` and `submissionDisabledSiteIds` are optional, and either can be sent without the other. Without them the location is created against every site in the plan. `enabledSiteIds` limits the listings to those sites; IDs outside the plan are ignored. `submissionDisabledSiteIds` keeps a site's listing but does not submit the location to it. Take site IDs from `GET /plan-sites` and show the user the intended publisher scope before creating.
+
+Set the sites on this call. Order items are generated shortly after creation, and a later `POST /locations/update` does not withdraw ones that already exist.
+
+Response: `data.createLocationFromConnectedAccountListing` with `success`, `locationId` (the numeric database ID) and `errors`. A Google import is not resubmitted to Google; its listing stays `IN_PROGRESS` until the first location update.
+
 ## Create a Google Business Profile listing
 
 For a location that has no Google listing at all. Different from connect-listing, which links one that already exists.
